@@ -8,24 +8,46 @@
 #include <syslog.h>
 #include <string.h>
 #include <pthread.h>
+#include <time.h>
 
 struct croninfo {
     int crontime[5];
     char path[512];
     char line[128];
+    // int lines;
 };
 struct croninfo cron[10];
 int maxline;
 const char* loc = "/home/iotatfan/FP_SISOP19_B11/crontab.data";
 
-void execute() {
-    char final[1024];
-    // sprintf(final,"bash %s",cron.path);
-    if(system(final)) {
-        puts("u suck");
-    }
-    else {
-        puts("success");
+void* execute(void* ar) {
+    struct croninfo *arg = (struct croninfo *)ar;
+    time_t rawtime;
+    struct tm *currtime;
+    while(1) {
+        time(&rawtime);
+        currtime=localtime(&rawtime);
+        if(arg->crontime[0]==currtime->tm_min || arg->crontime[0]<0) {
+            if(arg->crontime[1]==currtime->tm_hour || arg->crontime[1]<0) {
+                if(arg->crontime[2]==currtime->tm_mday || arg->crontime[2]<0) {
+                    if(arg->crontime[3]==currtime->tm_mon+1 || arg->crontime[3]<0) {
+                        if(arg->crontime[4]==currtime->tm_wday || arg->crontime[4<0]) {
+                            // puts(arg->line);
+                            puts(arg->path);
+                            pid_t child;
+                            child=fork();
+                            if(child==0) {
+                                char *argv[]={"bash",arg->path,NULL};
+                                execv("/bin/bash",argv);
+                            }
+                            else {
+                                puts("success");
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -54,9 +76,9 @@ int getconfig(int line,char config[]) {
     }
 
     char *path=strrchr(config,' ');
-    strcpy(cron[line].path,path);
+    char *temp=strchr(path,'/');
+    strcpy(cron[line].path,temp);
 }
-
 
 int getLines(FILE* file,int line) {
     char ch;
@@ -69,7 +91,10 @@ int getLines(FILE* file,int line) {
         if(ch=='\n') {
             strcpy(cron[line].line,config);
             getconfig(line,config);
-            pthread_create(&threads[line],NULL,execute,(void *)cron[line]);
+            // cron.lines=line;
+            // puts(cron[line].line);
+            struct croninfo *pcron = &cron[line];
+            pthread_create(&threads[line],NULL,execute,(void*)pcron);
             maxline=line;
             line++;
             i=0;
@@ -80,6 +105,7 @@ int getLines(FILE* file,int line) {
             i++;
         }
     }
+    // puts(cron.line);
     return 0;
 }
 
@@ -115,8 +141,8 @@ int main() {
   close(STDOUT_FILENO);
   close(STDERR_FILENO);
 
-  while(1) {
-     struct stat st;
+    while(1) {
+      struct stat st;
         stat(loc,&st);
 
         if(lastmod!=st.st_mtime) {
@@ -125,24 +151,12 @@ int main() {
             int count=0;
             cronfile = fopen(loc,"r");
 
-            getLines(cronfile,count);
+            getLines(cronfile,0);
 
-            while(count<maxline) {
-                // puts(cron[count].line);
-                int i=0;
-                while(i < 5) {
-                    printf("%d ",cron[count].crontime[i]);
-                    i++;
-                }
-                puts(cron[count].path);
-                count++;
-            }
 
             // puts(config);
             // execute();
         }
-    
-  }
-  
+    }
   exit(EXIT_SUCCESS);
 }
