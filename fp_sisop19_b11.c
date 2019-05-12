@@ -57,7 +57,7 @@ void* execute(void* ar) {
 }
 
 int getconfig(int line,char config[]) {
-    int i=0,cpy=0;
+    int i=0,cpy=0,tp=0;
     char a[2];
 
     // puts(".");
@@ -65,10 +65,12 @@ int getconfig(int line,char config[]) {
     while(i < 5) {
         if(config[cpy]==' ') {
             cpy++;
+            tp=0;
         }
         else if(config[cpy]!='*') {
-            a[0]=config[cpy];
+            a[tp]=config[cpy];
             cron[line].crontime[i]=atoi(a);
+            tp++;
             cpy++;
             i++;
         }  
