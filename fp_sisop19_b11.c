@@ -22,7 +22,7 @@ const char* loc = "/home/iotatfan/FP_SISOP19_B11/crontab.data";
 
 void* execute(void* ar) {
     struct croninfo *arg = (struct croninfo *)ar;
-    time_t rawtime;
+    time_t rawtime,check;
     struct tm *currtime;
     while(1) {
         time(&rawtime);
@@ -47,6 +47,11 @@ void* execute(void* ar) {
                     }
                 }
             }
+        }
+        time(&check);
+        while(difftime(check,rawtime)<=60.0) {
+            sleep(1);
+            time(&check);
         }
     }
 }
